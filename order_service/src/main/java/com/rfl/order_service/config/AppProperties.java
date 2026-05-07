@@ -2,7 +2,6 @@ package com.rfl.order_service.config;
 
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.bind.ConstructorBinding;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -12,11 +11,9 @@ public record AppProperties(
         Rabbitmq rabbitmq
 ) {
 
-    @ConstructorBinding
-    public AppProperties {}  // canonical constructor explícito
-
     public record Jwt(
-            @NotBlank String secret
+            @NotBlank String secret,
+            @NotBlank String expiration
     ) {}
 
     public record Rabbitmq(

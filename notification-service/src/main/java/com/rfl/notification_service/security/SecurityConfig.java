@@ -1,4 +1,4 @@
-package com.rfl.order_service.security;
+package com.rfl.notification_service.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

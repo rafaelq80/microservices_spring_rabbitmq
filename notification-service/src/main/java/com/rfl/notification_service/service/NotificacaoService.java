@@ -49,7 +49,7 @@ public class NotificacaoService {
 
         Notificacao notificacao = new Notificacao();
         notificacao.setPedidoId(evento.pedidoId());
-        notificacao.setDestinatario("sistema");
+        notificacao.setDestinatario(evento.atualizadoPor()); 
         notificacao.setMensagem(
                 "Pedido #" + evento.pedidoId() + " atualizado. " +
                 "Produto: " + evento.produto() +

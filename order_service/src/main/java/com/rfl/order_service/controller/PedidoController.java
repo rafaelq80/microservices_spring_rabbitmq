@@ -67,9 +67,12 @@ public class PedidoController {
     // UPDATE
     @PutMapping
     public ResponseEntity<PedidoResponseDTO> atualizar(
-            @Valid @RequestBody PedidoUpdateDTO pedidoDTO) {
+            @Valid @RequestBody PedidoUpdateDTO pedidoDTO,
+            Authentication authentication) {
+    	
+    	String usuario = authentication.getName();
 
-        return ResponseEntity.ok(service.atualizarPedido(pedidoDTO));
+        return ResponseEntity.ok(service.atualizarPedido(pedidoDTO, usuario));
     }
 
     // DELETE

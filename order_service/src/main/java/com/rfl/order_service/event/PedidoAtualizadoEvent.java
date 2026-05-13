@@ -4,5 +4,6 @@ public record PedidoAtualizadoEvent(
 	Long pedidoId,
     String produto,
     Integer quantidade,
-    String status
+    String status,
+    String atualizadoPor
 ) {}

@@ -6,5 +6,6 @@ public record PedidoAtualizadoEvent(
     @JsonProperty("pedidoId") Long pedidoId,
     @JsonProperty("produto") String produto,
     @JsonProperty("quantidade") Integer quantidade,
-    @JsonProperty("status") String status
+    @JsonProperty("status") String status,
+    @JsonProperty("atualizadoPor") String atualizadoPor
 ) {}

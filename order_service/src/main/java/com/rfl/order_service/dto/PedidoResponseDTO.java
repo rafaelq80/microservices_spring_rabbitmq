@@ -8,5 +8,6 @@ public record PedidoResponseDTO(
         Integer quantidade,
         String status,
         String criadoPor,
+        String atualizadoPor,
         LocalDateTime criadoEm
 ) {}

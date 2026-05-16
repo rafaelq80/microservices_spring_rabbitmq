@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.rfl.auth_service.dto.UsuarioCreateDTO;
 import com.rfl.auth_service.dto.UsuarioResponseDTO;
 import com.rfl.auth_service.dto.UsuarioUpdateDTO;
+import com.rfl.auth_service.exception.RecursoDuplicadoException;
 import com.rfl.auth_service.exception.RecursoNaoEncontradoException;
 import com.rfl.auth_service.model.Usuario;
 import com.rfl.auth_service.repository.UsuarioRepository;
@@ -27,7 +28,7 @@ public class UsuarioService {
     public UsuarioResponseDTO criarUsuario(UsuarioCreateDTO dto) {
 
         if (repository.existsByUsuario(dto.usuario())) {
-            throw new IllegalArgumentException(
+            throw new RecursoDuplicadoException(
                     "Usuário '" + dto.usuario() + "' já está em uso"
             );
         }
@@ -70,7 +71,7 @@ public class UsuarioService {
         if (dto.usuario() != null) {
             boolean usuarioAlterado = !dto.usuario().equalsIgnoreCase(usuario.getUsuario());
             if (usuarioAlterado && repository.existsByUsuario(dto.usuario())) {
-                throw new IllegalArgumentException(
+                throw new RecursoDuplicadoException(
                         "Usuário '" + dto.usuario() + "' já está em uso"
                 );
             }

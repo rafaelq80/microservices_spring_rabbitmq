@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.rfl.product_service.dto.CategoriaCreateDTO;
 import com.rfl.product_service.dto.CategoriaUpdateDTO;
 import com.rfl.product_service.exception.RecursoNaoEncontradoException;
+import com.rfl.product_service.exception.RecursoDuplicadoException;
 import com.rfl.product_service.model.Categoria;
 import com.rfl.product_service.repository.CategoriaRepository;
 
@@ -33,7 +34,7 @@ public class CategoriaService {
     public Categoria criar(CategoriaCreateDTO dto) {
 
         if (categoriaRepository.existsByNome(dto.nome())) {
-            throw new IllegalArgumentException("Categoria '" + dto.nome() + "' já existe");
+            throw new RecursoDuplicadoException("Categoria '" + dto.nome() + "' já existe");
         }
 
         Categoria categoria = new Categoria();

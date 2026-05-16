@@ -2,16 +2,14 @@ package com.rfl.product_service.service;
 
 import java.util.List;
 
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.rfl.product_service.config.AppProperties;
 import com.rfl.product_service.dto.ProdutoCreateDTO;
 import com.rfl.product_service.dto.ProdutoUpdateDTO;
 import com.rfl.product_service.enums.TipoEventoProduto;
-import com.rfl.product_service.event.ProdutoEvent;
 import com.rfl.product_service.exception.RecursoNaoEncontradoException;
+import com.rfl.product_service.message.ProdutoEventPublisher;
 import com.rfl.product_service.model.Categoria;
 import com.rfl.product_service.model.Produto;
 import com.rfl.product_service.repository.ProdutoRepository;
@@ -21,18 +19,15 @@ public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
     private final CategoriaService categoriaService;
-    private final AmqpTemplate amqpTemplate;
-    private final AppProperties appProperties;
+    private final ProdutoEventPublisher produtoEventPublisher;
 
     ProdutoService(ProdutoRepository produtoRepository,
                    CategoriaService categoriaService,
-                   AmqpTemplate amqpTemplate,
-                   AppProperties appProperties) {
+                   ProdutoEventPublisher produtoEventPublisher) {
     	
         this.produtoRepository = produtoRepository;
         this.categoriaService = categoriaService;
-        this.amqpTemplate     = amqpTemplate;
-        this.appProperties    = appProperties;
+        this.produtoEventPublisher = produtoEventPublisher;
     }
 
     public List<Produto> listar() {
@@ -59,45 +54,45 @@ public class ProdutoService {
     	
     	Categoria categoria = categoriaService.buscarPorId(produtoDTO.categoriaId());
 
-        Produto produto = new Produto();
-        produto.setNome(produtoDTO.nome());
-        produto.setDescricao(produtoDTO.descricao());
-        produto.setPreco(produtoDTO.preco());
-        produto.setCategoria(categoria);
+        Produto novoProduto = new Produto();
+        novoProduto.setNome(produtoDTO.nome());
+        novoProduto.setDescricao(produtoDTO.descricao());
+        novoProduto.setPreco(produtoDTO.preco());
+        novoProduto.setCategoria(categoria);
 
-        Produto salvo = produtoRepository.save(produto);
-        publicarEvento(salvo, TipoEventoProduto.CRIADO);
+        Produto produto = produtoRepository.save(novoProduto);
+        produtoEventPublisher.publicar(produto, TipoEventoProduto.CRIADO);
         return produto;
     }
 
     @Transactional
     public Produto atualizar(ProdutoUpdateDTO produtoDTO) {
         
-    	Produto produto = this.buscarPorId(produtoDTO.id());
+    	Produto produtoUpdate = this.buscarPorId(produtoDTO.id());
 
         if (produtoDTO.nome() != null)        
-        	produto.setNome(produtoDTO.nome());
+        	produtoUpdate.setNome(produtoDTO.nome());
         
         if (produtoDTO.descricao() != null)   
-        	produto.setDescricao(produtoDTO.descricao());
+        	produtoUpdate.setDescricao(produtoDTO.descricao());
         
         if (produtoDTO.preco() != null)       
-        	produto.setPreco(produtoDTO.preco());
+        	produtoUpdate.setPreco(produtoDTO.preco());
         
         if (produtoDTO.categoriaId() != null) 
-        	produto.setCategoria(categoriaService.buscarPorId(produtoDTO.categoriaId())
+        	produtoUpdate.setCategoria(categoriaService.buscarPorId(produtoDTO.categoriaId())
         );
         
         if (produtoDTO.ativo() != null)       
-        	produto.setAtivo(produtoDTO.ativo());
+        	produtoUpdate.setAtivo(produtoDTO.ativo());
 
-        Produto produtoAtualizado = produtoRepository.save(produto);
+        Produto produto = produtoRepository.save(produtoUpdate);
 
-       TipoEventoProduto tipo = !produtoAtualizado.isAtivo()
+       TipoEventoProduto tipo = !produto.isAtivo()
                 ? TipoEventoProduto.DESATIVADO
                 : TipoEventoProduto.ATUALIZADO;
 
-        publicarEvento(produtoAtualizado, tipo);
+       produtoEventPublisher.publicar(produto, tipo);
         
         return produto;
     }
@@ -109,23 +104,4 @@ public class ProdutoService {
         produtoRepository.deleteById(id);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private void publicarEvento(Produto produto, TipoEventoProduto tipo) {
-        var evento = new ProdutoEvent(
-                produto.getId(),
-                produto.getNome(),
-                produto.getDescricao(),
-                produto.getPreco(),
-                produto.getCategoria().getId(),
-                produto.getCategoria().getNome(),
-                produto.isAtivo(),
-                tipo
-        );
-        amqpTemplate.convertAndSend(
-                appProperties.rabbitmq().exchange(),
-                appProperties.rabbitmq().routingKey(),
-                evento
-        );
-    }
 }

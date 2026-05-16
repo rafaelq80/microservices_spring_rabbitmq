@@ -1,6 +1,11 @@
 package com.rfl.notification_service.service;
 
-import com.rfl.notification_service.dto.NotificacaoResponseDTO;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.rfl.notification_service.enums.StatusNotificacao;
 import com.rfl.notification_service.enums.TipoNotificacao;
 import com.rfl.notification_service.event.PedidoAtualizadoEvent;
@@ -8,11 +13,6 @@ import com.rfl.notification_service.event.PedidoCriadoEvent;
 import com.rfl.notification_service.exception.RecursoNaoEncontradoException;
 import com.rfl.notification_service.model.Notificacao;
 import com.rfl.notification_service.repository.NotificacaoRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class NotificacaoService {
@@ -30,12 +30,16 @@ public class NotificacaoService {
     public void processarPedidoCriado(PedidoCriadoEvent evento) {
         log.info("[Notificacao] Pedido criado recebido: pedidoId={}", evento.pedidoId());
 
+        int totalItens = evento.itens().stream()
+                .mapToInt(itens -> itens.quantidade())
+                .sum();
+
         Notificacao notificacao = new Notificacao();
         notificacao.setPedidoId(evento.pedidoId());
         notificacao.setDestinatario(evento.criadoPor());
         notificacao.setMensagem(
                 "Pedido #" + evento.pedidoId() + " criado com sucesso. " +
-                "Produto: " + evento.produto() + ", Quantidade: " + evento.quantidade()
+                totalItens + " item(ns), total: R$ " + evento.valorTotal()
         );
         notificacao.setTipo(TipoNotificacao.PEDIDO_CRIADO);
         notificacao.setStatus(StatusNotificacao.PROCESSADA);
@@ -49,12 +53,10 @@ public class NotificacaoService {
 
         Notificacao notificacao = new Notificacao();
         notificacao.setPedidoId(evento.pedidoId());
-        notificacao.setDestinatario(evento.atualizadoPor()); 
+        notificacao.setDestinatario(evento.criadoPor());
         notificacao.setMensagem(
                 "Pedido #" + evento.pedidoId() + " atualizado. " +
-                "Produto: " + evento.produto() +
-                ", Quantidade: " + evento.quantidade() +
-                ", Status: " + evento.status()
+                "Status: " + evento.novoStatus() + ", total: R$ " + evento.valorTotal()
         );
         notificacao.setTipo(TipoNotificacao.PEDIDO_ATUALIZADO);
         notificacao.setStatus(StatusNotificacao.PROCESSADA);
@@ -65,26 +67,16 @@ public class NotificacaoService {
 
     // ── Consultas ─────────────────────────────────────────────────────────────
 
-    public List<NotificacaoResponseDTO> listar() {
-        return repository.findAll()
-                .stream()
-                .map(NotificacaoResponseDTO::from)
-                .toList();
+    public List<Notificacao> listar() {
+        return repository.findAll();
     }
 
-    public NotificacaoResponseDTO buscarPorId(Long id) {
-        Notificacao notificacao = repository.findById(id)
-                .orElseThrow(() ->
-                        new RecursoNaoEncontradoException("Notificação não encontrada")
-                );
-        return NotificacaoResponseDTO.from(notificacao);
+    public Notificacao buscarPorId(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Notificação não encontrada"));
     }
 
-    public List<NotificacaoResponseDTO> listarPorDestinatario(String destinatario) {
-        return repository.findAllByDestinatario(destinatario)
-                .stream()
-                .map(NotificacaoResponseDTO::from)
-                .toList();
+    public List<Notificacao> listarPorDestinatario(String destinatario) {
+        return repository.findAllByDestinatario(destinatario);
     }
-
 }

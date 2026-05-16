@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.rfl.auth_service.dto.AuthResponse;
 import com.rfl.auth_service.dto.LoginRequest;
+import com.rfl.auth_service.exception.RecursoNaoEncontradoException;
 import com.rfl.auth_service.model.Usuario;
 import com.rfl.auth_service.repository.UsuarioRepository;
 import com.rfl.auth_service.security.JwtService;
@@ -37,7 +38,7 @@ public class AuthService {
 
         // Credenciais válidas: busca o usuário para obter o role e gerar o token.
         Usuario usuario = usuarioRepository.findByUsuario(request.usuario())
-            .orElseThrow(() -> new IllegalStateException("Usuário não encontrado após autenticação"));
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário " + request.usuario() + " não encontrado após autenticação"));
 
         String token = gerarToken(usuario.getUsuario(), usuario.getRole().name());
         

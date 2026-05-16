@@ -1,4 +1,4 @@
-package com.rfl.product_service.exception;
+package com.rfl.order_service.exception;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import com.rfl.product_service.dto.ErroResponseDTO;
+import com.rfl.order_service.dto.ErroResponseDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -222,6 +222,24 @@ public class GlobalExceptionHandler {
         ErroResponseDTO erro = new ErroResponseDTO(
         		HttpStatus.UNPROCESSABLE_CONTENT.value(),
                 "Recurso Duplicado",
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(erro);
+    }
+    
+    // 422 - Recurso inativo
+    @ExceptionHandler(RecursoInativoException.class)
+    public ResponseEntity<ErroResponseDTO> tratarRecursoInativo(
+            RecursoInativoException ex,
+            HttpServletRequest request) {
+
+        ErroResponseDTO erro = new ErroResponseDTO(
+                HttpStatus.UNPROCESSABLE_CONTENT.value(),
+                "Recurso inativo",
                 ex.getMessage(),
                 request.getRequestURI(),
                 LocalDateTime.now(),

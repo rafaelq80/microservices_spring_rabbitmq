@@ -1,39 +1,48 @@
 package com.rfl.notification_service.controller;
 
-import com.rfl.notification_service.dto.NotificacaoResponseDTO;
-import com.rfl.notification_service.service.NotificacaoService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.rfl.notification_service.dto.NotificacaoResponseDTO;
+import com.rfl.notification_service.mapper.NotificacaoMapper;
+import com.rfl.notification_service.service.NotificacaoService;
 
 @RestController
 @RequestMapping("/notificacoes")
-public class NotificacaoController {
+class NotificacaoController {
 
-    private final NotificacaoService service;
+    private final NotificacaoService notificacaoService;
+    private final NotificacaoMapper notificacaoMapper;
 
-    public NotificacaoController(NotificacaoService service) {
-        this.service = service;
+    NotificacaoController(NotificacaoService notificacaoService,
+                          NotificacaoMapper notificacaoMapper) {
+        this.notificacaoService = notificacaoService;
+        this.notificacaoMapper  = notificacaoMapper;
     }
 
-    // FIND ALL
     @GetMapping
-    public ResponseEntity<List<NotificacaoResponseDTO>> listar() {
-        return ResponseEntity.ok(service.listar());
+    public List<NotificacaoResponseDTO> listar() {
+        return notificacaoService.listar()
+                .stream()
+                .map(notificacaoMapper::toNotificacaoResponseDTO)
+                .toList();
     }
 
-    // FIND BY ID
     @GetMapping("/{id}")
-    public ResponseEntity<NotificacaoResponseDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(service.buscarPorId(id));
+    public NotificacaoResponseDTO buscarPorId(@PathVariable Long id) {
+        return notificacaoMapper.toNotificacaoResponseDTO(notificacaoService.buscarPorId(id));
     }
 
-    // FIND ALL BY DESTINATARIO
-    @GetMapping("/destinatario/{destinatario}")
-    public ResponseEntity<List<NotificacaoResponseDTO>> listarPorDestinatario(
-            @PathVariable String destinatario) {
-        return ResponseEntity.ok(service.listarPorDestinatario(destinatario));
+    @GetMapping("/criador")
+    public List<NotificacaoResponseDTO> listarMinhas(Authentication auth) {
+        return notificacaoService.listarPorDestinatario(auth.getName())
+                .stream()
+                .map(notificacaoMapper::toNotificacaoResponseDTO)
+                .toList();
     }
-
 }
